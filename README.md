@@ -1,4 +1,4 @@
-# PupilTree - Engineering Performance Bot
+# Engineering Performance Bot
 
 A chat-first, AI-powered system that provides insights into engineering team performance using LangChain agents and GitHub data analysis.
 
