@@ -1,4 +1,4 @@
-# Engineering Performance Bot MVP
+# PupilTree - Engineering Performance Bot
 
 A chat-first, AI-powered system that provides insights into engineering team performance using LangChain agents and GitHub data analysis.
 
@@ -12,8 +12,8 @@ A chat-first, AI-powered system that provides insights into engineering team per
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  GitHub API     │    │  Analytics DB   │    │   Slack Bot     │
-│   Webhooks      │    │   (SQLite)      │    │   Interface     │
+│  GitHub API     │    │   SQLite DB     │    │   Slack Bot     │
+│  Integration    │    │  performance.db │    │   Interface     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -24,30 +24,45 @@ A chat-first, AI-powered system that provides insights into engineering team per
 docker compose up --build
 
 # Option 2: Manual setup
+# Activate your virtual environment first
+python -m venv myenv
+myenv\Scripts\activate  # Windows
+# source myenv/bin/activate  # Linux/Mac
+pip install -r requirements.txt
+
 python main.py setup   # Initialize database and apply fixes
 python main.py         # Start the Slack bot
 ```
 
 ## Features
 
-- 🤖 **LangChain/LangGraph Agents**: Data Harvester → Diff Analyst → Insight Narrator
+- 🤖 **LangChain/LangGraph Agents**: Pipeline of specialized agents for data processing
 - 📊 **DORA Metrics**: Lead time, deployment frequency, change failure rate, MTTR  
 - 💬 **Chat-First Interface**: Slack bot with `/dev-report` command
-- 📈 **Diff Analytics**: Code churn analysis, risk assessment, outlier detection
-- 🔍 **GitHub Integration**: Real-time webhook processing and REST API data
+- 📈 **Performance Analytics**: Code activity analysis and team performance tracking
+- 🔍 **GitHub Integration**: Comprehensive GitHub API integration
 - 📅 **Time-Based Reports**: Daily, weekly, monthly insights
-- 🎯 **Business Value Mapping**: Technical metrics linked to business outcomes
+- 📊 **Data Visualization**: Chart generation with matplotlib
 
-## Quick Start
+## Installation & Setup
 
 1. **Clone and setup**:
    ```bash
    git clone <repo>
-   cd engineering-performance-bot
+   cd pupil_tree
    ```
 
 2. **Configure environment**:
    ```bash
+   # Create and activate virtual environment
+   python -m venv myenv
+   myenv\Scripts\activate  # Windows
+   # source myenv/bin/activate  # Linux/Mac
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Create .env file
    cp .env.example .env
    # Edit .env with your API keys
    ```
@@ -55,15 +70,24 @@ python main.py         # Start the Slack bot
    Required environment variables:
    - `GITHUB_TOKEN`: Personal access token for GitHub API
    - `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_APP_TOKEN`: Slack app credentials
-   - `DATABASE_URL`: Database connection string
    - `GROQ_API_KEY` or other LLM provider credentials
 
-3. **Run with one command**:
+3. **Initialize database and run**:
    ```bash
+   # Setup the database and initialize data
+   python main.py setup
+   
+   # Start the bot
+   python main.py
+   ```
+
+4. **Docker alternative**:
+   ```bash
+   # Build and start using Docker
    docker compose up --build
    ```
 
-4. **Use in Slack**:
+5. **Use in Slack**:
    ```
    /dev-report weekly
    /dev-report daily team:backend
@@ -80,7 +104,7 @@ python main.py         # Start the Slack bot
 
 ## Environment Configuration
 
-All credentials and configuration settings are stored in the `.env` file:
+All credentials and configuration settings should be stored in a `.env` file:
 
 ```ini
 # 1. GitHub Configuration (required)
@@ -105,18 +129,7 @@ LOG_LEVEL=INFO
 TIMEZONE=UTC
 ```
 
-Copy the `.env.example` file and fill in your credentials:
-
-```bash
-cp .env.example .env
-# Edit with your preferred text editor
-```
-
 For security, never commit your actual `.env` file to version control.
-
-# Database
-DATABASE_URL=sqlite:///./data/performance.db
-```
 
 ## Usage in Slack
 
@@ -129,7 +142,7 @@ The bot responds to `/dev-report` commands:
 /dev-report team:backend    # Team-specific report
 ```
 
-## Demo Mode
+## Testing Mode
 
 To see the bot in action without Slack setup:
 
@@ -138,208 +151,117 @@ To see the bot in action without Slack setup:
 python main.py test
 ```
 
-This runs the agent pipeline and displays sample insights without starting the Slack bot.
+This runs the agent pipeline and displays sample insights without starting the Slack bot, giving you an instant view of the system's capabilities with realistic data.
 
-This gives reviewers an instant view of the system's capabilities with realistic data.
+## Project Structure
 
-## API Endpoints (Optional)
+The project follows a modular architecture with several main components:
 
-While the challenge focuses on chat-first, we also provide JSON API:
+```
+pupil_tree/
+├── agents/                 # LangGraph agent implementations
+│   └── pipeline.py         # Agent pipeline orchestration
+├── bot/                   # Slack bot interface
+│   └── app.py             # Slack app setup and handlers
+├── core/                  # Core business logic
+│   ├── database.py        # Database operations
+│   ├── metrics.py         # DORA metrics calculation
+│   └── models.py          # Database models
+├── integrations/          # External service integrations
+│   ├── github_client.py   # GitHub API client
+│   └── llm_client.py      # LLM abstraction layer
+├── visualization/         # Chart and report generation
+│   └── charts.py          # Matplotlib chart generation
+├── scripts/               # Utility scripts
+│   ├── init_db.py         # Database initialization
+│   ├── seed_data.py       # Sample data generation
+│   ├── setup.py           # Setup script
+│   └── various utilities  # Helper and fix scripts
+├── docker-compose.yml     # Container orchestration
+├── Dockerfile             # Container definition
+├── main.py                # Application entry point
+├── performance.db         # SQLite database
+└── requirements.txt       # Python dependencies
+```
 
-- `GET /metrics` - Performance metrics with parameters
-- `GET /report` - Comprehensive reports  
-- `GET /charts` - Performance visualizations
-- `GET /dashboard` - Interactive web interface
+## Prerequisites
 
-Access at: http://localhost:8000 (when running FastAPI mode)
-
-- **Agent-Centric Design**: Three specialized LangGraph agents working in pipeline
-- **GitHub Integration**: Real-time data ingestion via REST API and webhooks
-- **DORA Metrics**: Tracks lead time, deployment frequency, change failure rate, and MTTR
-- **Diff Analytics**: Code churn analysis and defect risk correlation
-- **Slack Integration**: Interactive `/dev-report` command with rich visualizations
-- **One-Command Bootstrap**: Simple setup with Docker Compose
-
-## Quick Start
-
-### Prerequisites
 - Python 3.10+
 - Slack workspace with bot permissions
 - GitHub personal access token
 - Groq API key (for Llama models) or OpenAI API key
 
-### Installation
+## Core Components
 
-1. Clone and setup:
+### Agent Pipeline
+
+The system uses a LangGraph agent pipeline that processes data in stages:
+
+1. **Data Collection**: Retrieves GitHub commits, PRs, and deployments
+2. **Analysis**: Processes raw data to calculate performance metrics
+3. **Insight Generation**: Creates human-readable narratives from analysis results
+
+### Database Structure
+
+The SQLite database (`performance.db`) contains the following tables:
+
+- **Engineers**: Developer information linked to GitHub accounts
+- **Teams**: Team structures and configurations
+- **Repositories**: GitHub repositories tracked by the system
+- **Commits**: Git commit history and metadata
+- **PullRequests**: PR data including reviews and status
+- **Deployments**: Release information
+- **Incidents**: Production issues and resolution data
+- **MetricSnapshots**: Point-in-time performance metrics
+
+### Metrics Tracked
+
+- **DORA Metrics**
+  - Lead Time for Changes
+  - Deployment Frequency
+  - Change Failure Rate
+  - Mean Time to Restore
+
+- **Performance Metrics**
+  - Commit frequency
+  - Code churn
+  - PR review time
+  - Deployment success rate
+
+### Visualization
+
+The `ChartGenerator` class provides visualization capabilities:
+- DORA metrics dashboards
+- Team performance charts
+- Individual developer metrics
+- Trend analysis
+
+## Docker Support
+
+The project includes Docker configuration for easy deployment:
+
+- `Dockerfile`: Defines the container image based on Python 3.10
+- `docker-compose.yml`: Orchestrates the application and database initialization
+
+To build and run with Docker:
+
 ```bash
-git clone <repo-url>
-cd pupil_tree
-python -m venv myenv
-# Windows
-myenv\Scripts\activate
-# Linux/Mac
-source myenv/bin/activate
-pip install -r requirements.txt
+docker compose up --build
 ```
 
-2. Configure environment:
-```bash
-cp .env.example .env
-# Edit .env with your API keys and tokens
-```
+This will:
+1. Build the container image
+2. Run database initialization script
+3. Start the Slack bot application
 
-3. Initialize database and seed data:
-```bash
-python scripts/init_db.py
-python scripts/seed_data.py
-```
+## Scripts Directory
 
-4. Start the bot:
-```bash
-python main.py
-```
+The `scripts/` directory contains various utility scripts:
 
-Or use Docker:
-```bash
-docker-compose up
-```
-
-### Slack Bot Setup
-
-1. Create a new Slack app at https://api.slack.com/apps
-2. Add bot token scopes: `chat:write`, `commands`, `files:write`
-3. Install app to workspace
-4. Copy bot token to `.env`
-5. Enable slash commands: `/dev-report`
-
-## Usage
-
-In Slack, use these commands:
-
-- `/dev-report daily` - Daily performance summary
-- `/dev-report weekly` - Weekly team insights
-- `/dev-report monthly` - Monthly DORA metrics analysis
-
-## Project Structure
-
-```
-pupil_tree/
-├── agents/                 # LangGraph agent implementations
-│   ├── data_harvester.py  # GitHub data collection
-│   ├── diff_analyst.py    # Code churn and risk analysis
-│   └── insight_narrator.py # AI narrative generation
-├── bot/                   # Slack bot interface
-│   ├── handlers.py        # Command handlers
-│   └── app.py            # Slack app setup
-├── core/                  # Core business logic
-│   ├── models.py         # Data models
-│   ├── database.py       # Database operations
-│   └── metrics.py        # DORA metrics calculation
-├── integrations/          # External service integrations
-│   ├── github_client.py  # GitHub API client
-│   └── llm_client.py     # LLM abstraction layer
-├── visualization/         # Chart and report generation
-│   └── charts.py         # Matplotlib/Plotly charts
-├── scripts/              # Utility scripts
-│   ├── init_db.py       # Database initialization
-│   └── seed_data.py     # Sample data generation
-├── docker-compose.yml    # Container orchestration
-├── Dockerfile           # Container definition
-├── .env.example         # Environment template
-└── main.py             # Application entry point
-```
-
-## Configuration
-
-### Environment Variables
-
-```
-# GitHub
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxx
-GITHUB_WEBHOOK_SECRET=your_webhook_secret
-
-# Slack
-SLACK_BOT_TOKEN=xoxb-xxxxxxxxxxxxx
-SLACK_SIGNING_SECRET=xxxxxxxxxxxxx
-
-# Groq (default - fast Llama models)
-GROQ_API_KEY=gsk_xxxxxxxxxxxxx
-LLM_PROVIDER=groq
-
-# Database
-DATABASE_URL=sqlite:///./performance.db
-```
-
-### Agent Configuration
-
-The system uses three LangGraph agents:
-
-1. **Data Harvester**: Collects GitHub events, commits, and PR data
-2. **Diff Analyst**: Analyzes code changes and calculates risk metrics
-3. **Insight Narrator**: Generates human-readable performance insights
-
-## Metrics Tracked
-
-### DORA Metrics
-- **Lead Time**: Time from commit to deployment
-- **Deployment Frequency**: How often deployments occur
-- **Change Failure Rate**: Percentage of deployments causing failures
-- **Mean Time to Recovery**: Average time to fix incidents
-
-### Code Quality Metrics
-- Lines added/deleted per commit
-- Files touched per change
-- Code churn correlation with defects
-- Review latency and throughput
-
-## API Endpoints
-
-The bot exposes optional JSON endpoints:
-
-- `GET /metrics/team/{team_id}` - Team performance data
-- `GET /metrics/engineer/{engineer_id}` - Individual metrics
-- `POST /webhook/github` - GitHub webhook receiver
-
-## Development
-
-### Running Tests
-```bash
-pytest tests/
-```
-
-### Code Formatting
-```bash
-black .
-flake8 .
-```
-
-### Adding New Agents
-
-1. Create agent class inheriting from `BaseAgent`
-2. Define state schema and graph structure
-3. Register in LangGraph workflow
-4. Add integration tests
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Bot not responding**: Check Slack permissions and token validity
-2. **GitHub API rate limits**: Implement token rotation or caching
-3. **Agent failures**: Check LLM API keys and quotas
-
-### Logs
-
-Application logs are available in `logs/` directory with structured JSON format for easy parsing.
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -am 'Add new feature'`
-4. Push branch: `git push origin feature/new-feature`
-5. Submit pull request
-
-## License
-
-MIT License - see LICENSE file for details.
+- `init_db.py`: Initialize the database schema
+- `seed_data.py`: Create test data for development
+- `setup.py`: Combined setup script
+- `fix_*.py`: Various fixes for common issues
+- `check_*.py`: Diagnostic tools
+- `update_repos.py`: Update GitHub repository data
+- `setup_demo.py`: Set up demonstration mode
